@@ -6,6 +6,7 @@ public partial class MainWindow : Window
 {
     private readonly OverlayWindow _overlay = new();
     private readonly NotificationWatcher _watcher;
+    private bool _settingsOpened;
 
     public MainWindow()
     {
@@ -13,7 +14,8 @@ public partial class MainWindow : Window
         _watcher = new NotificationWatcher(OnNotification);
         Loaded += (_, _) =>
         {
-            StatusText.Text = "Ready. Click Enable notification access to start Discord fullscreen overlay.";
+            StatusText.Text = "Ready. Click Open notification settings first, enable notification access if Windows shows this app, then click the button again to start.";
+            PermissionButton.Content = "Open notification settings";
         };
     }
 
@@ -27,11 +29,28 @@ public partial class MainWindow : Window
     private async void PermissionButton_Click(object sender, RoutedEventArgs e)
     {
         PermissionButton.IsEnabled = false;
-        StatusText.Text = "Requesting notification access…";
         try
         {
-            var status = await _watcher.RequestPermissionAndStartAsync();
+            if (!_settingsOpened)
+            {
+                _settingsOpened = true;
+                PermissionButton.Content = "Start listener";
+                StatusText.Text = "I opened Windows notification settings. Enable notification access there if available, then come back and click Start listener.";
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "ms-settings:notifications",
+                    UseShellExecute = true
+                });
+                return;
+            }
+
+            StatusText.Text = "Starting listener…";
+            var status = await _watcher.StartAsync();
             StatusText.Text = status;
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Could not start: {ex.Message}";
         }
         finally
         {

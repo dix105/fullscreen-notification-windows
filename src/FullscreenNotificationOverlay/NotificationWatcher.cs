@@ -42,40 +42,9 @@ public sealed class NotificationWatcher
         return "Running. I’ll show overlay banners for new notifications while you’re in fullscreen.";
     }
 
-    public async Task<string> RequestPermissionAndStartAsync()
+    public Task<string> RequestPermissionAndStartAsync()
     {
-        try
-        {
-            _listener = UserNotificationListener.Current;
-        }
-        catch (Exception ex)
-        {
-            return $"Windows notification listener failed to initialize: {ex.Message}";
-        }
-
-        UserNotificationListenerAccessStatus access;
-        try
-        {
-            var request = Task.Run(async () => await _listener.RequestAccessAsync().AsTask());
-            var granted = await WithTimeout(request, TimeSpan.FromSeconds(10));
-            if (!granted)
-            {
-                return "Windows notification permission request timed out. The app is still responsive — open Windows Settings → Privacy & security → Notifications, allow notification access, then click again.";
-            }
-
-            access = request.Result;
-        }
-        catch (Exception ex)
-        {
-            return $"Windows notification permission request failed: {ex.Message}. Open Windows Settings → Privacy & security → Notifications and allow notification access manually.";
-        }
-
-        if (access != UserNotificationListenerAccessStatus.Allowed)
-        {
-            return $"Notification access was not granted ({access}). Open Windows Settings → Privacy & security → Notifications and allow this app.";
-        }
-
-        return await StartAsync();
+        return Task.FromResult("This build no longer calls Windows permission popup directly because it crashes on some PCs. Use Open notification settings, then Start listener.");
     }
 
     private async Task PrimeSeenNotificationsAsync()
