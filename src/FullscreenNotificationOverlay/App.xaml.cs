@@ -11,11 +11,7 @@ public partial class App : Application
         DispatcherUnhandledException += (_, args) =>
         {
             LogCrash(args.Exception);
-            MessageBox.Show($"The app hit an error but was caught:
-
-{args.Exception.Message}
-
-A log was saved next to the EXE.", "Fullscreen Notification Overlay", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"The app hit an error but was caught:\n\n{args.Exception.Message}\n\nA log was saved next to the EXE.", "Fullscreen Notification Overlay", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
@@ -33,9 +29,7 @@ A log was saved next to the EXE.", "Fullscreen Notification Overlay", MessageBox
     {
         try
         {
-            File.AppendAllText(Path.Combine(AppContext.BaseDirectory, "overlay-crash.log"), $"[{DateTimeOffset.Now}] {ex}
-
-");
+            File.AppendAllText(Path.Combine(AppContext.BaseDirectory, "overlay-crash.log"), $"[{DateTimeOffset.Now}] {ex}\n\n");
         }
         catch
         {
