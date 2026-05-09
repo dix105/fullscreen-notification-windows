@@ -16,7 +16,15 @@ public sealed class NotificationWatcher
 
     public async Task<string> StartAsync()
     {
-        _listener = UserNotificationListener.Current;
+        try
+        {
+            _listener = UserNotificationListener.Current;
+        }
+        catch (Exception ex)
+        {
+            return $"Windows notification listener failed to initialize: {ex.Message}";
+        }
+
         var access = _listener.GetAccessStatus();
 
         if (access != UserNotificationListenerAccessStatus.Allowed)
@@ -24,7 +32,11 @@ public sealed class NotificationWatcher
             return "Notification access is not enabled yet. Click “Enable notification access”, then allow this app in Windows Settings if prompted.";
         }
 
-        await PrimeSeenNotificationsAsync();
+        var primed = await WithTimeout(PrimeSeenNotificationsAsync(), TimeSpan.FromSeconds(4));
+        if (!primed)
+        {
+            return "Notification listener started, but Windows took too long to read old notifications. Try sending a new Discord message now.";
+        }
         _listener.NotificationChanged -= OnNotificationChanged;
         _listener.NotificationChanged += OnNotificationChanged;
         return "Running. I’ll show overlay banners for new notifications while you’re in fullscreen.";
@@ -32,8 +44,23 @@ public sealed class NotificationWatcher
 
     public async Task<string> RequestPermissionAndStartAsync()
     {
-        _listener = UserNotificationListener.Current;
-        var access = await _listener.RequestAccessAsync();
+        try
+        {
+            _listener = UserNotificationListener.Current;
+        }
+        catch (Exception ex)
+        {
+            return $"Windows notification listener failed to initialize: {ex.Message}";
+        }
+
+        var request = _listener.RequestAccessAsync().AsTask();
+        var granted = await WithTimeout(request, TimeSpan.FromSeconds(12));
+        if (!granted)
+        {
+            return "Windows did not respond to the notification permission request. Open Windows Settings → Privacy & security → Notifications and allow this app, then click again.";
+        }
+
+        var access = request.Result;
 
         if (access != UserNotificationListenerAccessStatus.Allowed)
         {
@@ -59,7 +86,9 @@ public sealed class NotificationWatcher
 
         try
         {
-            var notifications = await sender.GetNotificationsAsync(NotificationKinds.Toast);
+            var notificationsTask = sender.GetNotificationsAsync(NotificationKinds.Toast).AsTask();
+            if (!await WithTimeout(notificationsTask, TimeSpan.FromSeconds(3))) return;
+            var notifications = notificationsTask.Result;
             foreach (var notification in notifications.OrderByDescending(n => n.CreationTime))
             {
                 if (!_seen.Add(notification.Id)) continue;
@@ -77,6 +106,18 @@ public sealed class NotificationWatcher
         {
             // Notification APIs can throw for expired/inaccessible notifications. Ignore and keep listening.
         }
+    }
+
+    private static async Task<bool> WithTimeout(Task task, TimeSpan timeout)
+    {
+        var completed = await Task.WhenAny(task, Task.Delay(timeout));
+        return completed == task;
+    }
+
+    private static async Task<bool> WithTimeout<T>(Task<T> task, TimeSpan timeout)
+    {
+        var completed = await Task.WhenAny(task, Task.Delay(timeout));
+        return completed == task;
     }
 
     private static NotificationItem Convert(UserNotification notification)

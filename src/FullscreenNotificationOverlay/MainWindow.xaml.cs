@@ -11,19 +11,32 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         _watcher = new NotificationWatcher(OnNotification);
-        Loaded += async (_, _) => await StartAsync();
+        Loaded += (_, _) =>
+        {
+            StatusText.Text = "Ready. Click Enable notification access to start Discord fullscreen overlay.";
+        };
     }
 
     private async Task StartAsync()
     {
+        StatusText.Text = "Starting listener…";
         var status = await _watcher.StartAsync();
         StatusText.Text = status;
     }
 
     private async void PermissionButton_Click(object sender, RoutedEventArgs e)
     {
-        var status = await _watcher.RequestPermissionAndStartAsync();
-        StatusText.Text = status;
+        PermissionButton.IsEnabled = false;
+        StatusText.Text = "Requesting notification access…";
+        try
+        {
+            var status = await _watcher.RequestPermissionAndStartAsync();
+            StatusText.Text = status;
+        }
+        finally
+        {
+            PermissionButton.IsEnabled = true;
+        }
     }
 
     private void TestButton_Click(object sender, RoutedEventArgs e)
