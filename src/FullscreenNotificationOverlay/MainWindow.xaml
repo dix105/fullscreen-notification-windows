@@ -1,0 +1,33 @@
+<Window x:Class="FullscreenNotificationOverlay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Fullscreen Notification Overlay"
+        Width="440" Height="260"
+        WindowStartupLocation="CenterScreen"
+        Background="#111827">
+  <Grid Margin="24">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <StackPanel>
+      <TextBlock Text="Discord Fullscreen Overlay" Foreground="White" FontSize="22" FontWeight="SemiBold" />
+      <TextBlock Text="Mirrors only Discord notifications as a bottom-right overlay when fullscreen apps hide them." Foreground="#CBD5E1" TextWrapping="Wrap" Margin="0,8,0,0" />
+    </StackPanel>
+
+    <Border Grid.Row="1" Background="#1F2937" CornerRadius="14" Padding="16" Margin="0,22,0,22">
+      <StackPanel>
+        <TextBlock x:Name="StatusText" Foreground="#E5E7EB" FontSize="14" Text="Starting…" TextWrapping="Wrap" />
+        <TextBlock Foreground="#94A3B8" FontSize="12" Margin="0,12,0,0" TextWrapping="Wrap"
+                   Text="Tip: if a game blocks the overlay, switch it from Exclusive Fullscreen to Borderless Fullscreen." />
+      </StackPanel>
+    </Border>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+      <Button x:Name="TestButton" Content="Test banner" Padding="14,8" Margin="0,0,8,0" Click="TestButton_Click" />
+      <Button x:Name="PermissionButton" Content="Enable notification access" Padding="14,8" Click="PermissionButton_Click" />
+    </StackPanel>
+  </Grid>
+</Window>
