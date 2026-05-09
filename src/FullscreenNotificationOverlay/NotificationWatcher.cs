@@ -53,14 +53,22 @@ public sealed class NotificationWatcher
             return $"Windows notification listener failed to initialize: {ex.Message}";
         }
 
-        var request = _listener.RequestAccessAsync().AsTask();
-        var granted = await WithTimeout(request, TimeSpan.FromSeconds(12));
-        if (!granted)
+        UserNotificationListenerAccessStatus access;
+        try
         {
-            return "Windows did not respond to the notification permission request. Open Windows Settings → Privacy & security → Notifications and allow this app, then click again.";
-        }
+            var request = Task.Run(async () => await _listener.RequestAccessAsync().AsTask());
+            var granted = await WithTimeout(request, TimeSpan.FromSeconds(10));
+            if (!granted)
+            {
+                return "Windows notification permission request timed out. The app is still responsive — open Windows Settings → Privacy & security → Notifications, allow notification access, then click again.";
+            }
 
-        var access = request.Result;
+            access = request.Result;
+        }
+        catch (Exception ex)
+        {
+            return $"Windows notification permission request failed: {ex.Message}. Open Windows Settings → Privacy & security → Notifications and allow notification access manually.";
+        }
 
         if (access != UserNotificationListenerAccessStatus.Allowed)
         {
