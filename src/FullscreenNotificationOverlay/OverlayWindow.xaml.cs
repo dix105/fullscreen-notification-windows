@@ -14,11 +14,11 @@ public partial class OverlayWindow : Window
     public OverlayWindow()
     {
         InitializeComponent();
+        ShowActivated = false;
         Loaded += (_, _) => MakeNoActivateToolWindow();
         _hideTimer.Tick += (_, _) => HideBanner();
     }
 
-    protected override bool ShowActivated => false;
 
     public void ShowBanner(NotificationItem item)
     {
